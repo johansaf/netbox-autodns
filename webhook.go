@@ -43,14 +43,14 @@ func updateRecord(webhook Webhook) error {
 	dnsName := ensureDot(webhook.Data.DnsName)
 
 	// Create the new reverse record
-	if cfg.SkipReverseRecord {
+	if !cfg.SkipReverseRecord {
 		if err := cfg.PdnsClient.Records.Change(cfg.ctx, zone, record, powerdns.RRTypePTR, 86400, []string{dnsName}); err != nil {
 			return fmt.Errorf("could not create new reverse record: %s", err)
 		}
 	}
 
 	// Create the new forward record
-	if cfg.SkipForwardRecord {
+	if !cfg.SkipForwardRecord {
 		if strings.HasSuffix(dnsName, cfg.Domain) {
 			if webhook.Data.Address.Addr().Is4() {
 				if err := cfg.PdnsClient.Records.Change(cfg.ctx, cfg.Domain, dnsName, powerdns.RRTypeA, 86400, []string{webhook.Data.Address.Addr().String()}); err != nil {
@@ -75,14 +75,14 @@ func deleteRecord(ip netip.Prefix, dnsName string) error {
 	dnsName = ensureDot(dnsName)
 
 	// Delete the old reverse record
-	if cfg.SkipReverseRecord {
+	if !cfg.SkipReverseRecord {
 		if err := cfg.PdnsClient.Records.Delete(cfg.ctx, zone, record, powerdns.RRTypePTR); err != nil {
 			return fmt.Errorf("could not delete reverse record: %s", err)
 		}
 	}
 
 	// Delete the old forward record
-	if cfg.SkipForwardRecord {
+	if !cfg.SkipForwardRecord {
 		if ip.Addr().Is4() {
 			if err := cfg.PdnsClient.Records.Delete(cfg.ctx, cfg.Domain, dnsName, powerdns.RRTypeA); err != nil {
 				return fmt.Errorf("could not delete forward record: %s", err)
