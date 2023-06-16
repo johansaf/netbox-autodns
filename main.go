@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+
+	"github.com/joeig/go-powerdns/v3"
 )
 
 type Config struct {
@@ -12,6 +15,8 @@ type Config struct {
 	Domain            string
 	SkipForwardRecord bool
 	SkipReverseRecord bool
+	PdnsClient        *powerdns.Client
+	ctx               context.Context
 }
 
 var cfg = readConfig()

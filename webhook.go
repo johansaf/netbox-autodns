@@ -28,11 +28,11 @@ type Webhook struct {
 	} `json:"snapshots"`
 }
 
-func updateRecord(client *powerdns.Client, ctx context.Context, webhook Webhook) error {
+func updateRecord(webhook Webhook) error {
 	// Delete the old reverse and forward record to prevent stale records
 	// "invalid Prefix" means there's no old data available, we also don't want to delete the record if the dns name is empty
 	if webhook.OldData.Prechange.Address.String() != "invalid Prefix" && webhook.OldData.Prechange.DnsName != "" {
-		deleteRecord(client, ctx, webhook.OldData.Prechange.Address, webhook.OldData.Prechange.DnsName)
+		deleteRecord(webhook.OldData.Prechange.Address, webhook.OldData.Prechange.DnsName)
 	}
 
 	// Create new records
@@ -44,7 +44,7 @@ func updateRecord(client *powerdns.Client, ctx context.Context, webhook Webhook)
 
 	// Create the new reverse record
 	if cfg.SkipReverseRecord {
-		if err := client.Records.Change(ctx, zone, record, powerdns.RRTypePTR, 86400, []string{dnsName}); err != nil {
+		if err := cfg.PdnsClient.Records.Change(cfg.ctx, zone, record, powerdns.RRTypePTR, 86400, []string{dnsName}); err != nil {
 			return fmt.Errorf("could not create new reverse record: %s", err)
 		}
 	}
@@ -53,11 +53,11 @@ func updateRecord(client *powerdns.Client, ctx context.Context, webhook Webhook)
 	if cfg.SkipForwardRecord {
 		if strings.HasSuffix(dnsName, cfg.Domain) {
 			if webhook.Data.Address.Addr().Is4() {
-				if err := client.Records.Change(ctx, cfg.Domain, dnsName, powerdns.RRTypeA, 86400, []string{webhook.Data.Address.Addr().String()}); err != nil {
+				if err := cfg.PdnsClient.Records.Change(cfg.ctx, cfg.Domain, dnsName, powerdns.RRTypeA, 86400, []string{webhook.Data.Address.Addr().String()}); err != nil {
 					return fmt.Errorf("could not create new forward record: %s", err)
 				}
 			} else {
-				if err := client.Records.Change(ctx, cfg.Domain, dnsName, powerdns.RRTypeAAAA, 86400, []string{webhook.Data.Address.Addr().String()}); err != nil {
+				if err := cfg.PdnsClient.Records.Change(cfg.ctx, cfg.Domain, dnsName, powerdns.RRTypeAAAA, 86400, []string{webhook.Data.Address.Addr().String()}); err != nil {
 					return fmt.Errorf("could not create new forward record: %s", err)
 				}
 			}
@@ -67,7 +67,7 @@ func updateRecord(client *powerdns.Client, ctx context.Context, webhook Webhook)
 	return nil
 }
 
-func deleteRecord(client *powerdns.Client, ctx context.Context, ip netip.Prefix, dnsName string) error {
+func deleteRecord(ip netip.Prefix, dnsName string) error {
 	zone, record, err := generateReverse(ip)
 	if err != nil {
 		return fmt.Errorf("could not generate reverse zone and record: %s", err)
@@ -76,7 +76,7 @@ func deleteRecord(client *powerdns.Client, ctx context.Context, ip netip.Prefix,
 
 	// Delete the old reverse record
 	if cfg.SkipReverseRecord {
-		if err := client.Records.Delete(ctx, zone, record, powerdns.RRTypePTR); err != nil {
+		if err := cfg.PdnsClient.Records.Delete(cfg.ctx, zone, record, powerdns.RRTypePTR); err != nil {
 			return fmt.Errorf("could not delete reverse record: %s", err)
 		}
 	}
@@ -84,11 +84,11 @@ func deleteRecord(client *powerdns.Client, ctx context.Context, ip netip.Prefix,
 	// Delete the old forward record
 	if cfg.SkipForwardRecord {
 		if ip.Addr().Is4() {
-			if err := client.Records.Delete(ctx, cfg.Domain, dnsName, powerdns.RRTypeA); err != nil {
+			if err := cfg.PdnsClient.Records.Delete(cfg.ctx, cfg.Domain, dnsName, powerdns.RRTypeA); err != nil {
 				return fmt.Errorf("could not delete forward record: %s", err)
 			}
 		} else {
-			if err := client.Records.Delete(ctx, cfg.Domain, dnsName, powerdns.RRTypeAAAA); err != nil {
+			if err := cfg.PdnsClient.Records.Delete(cfg.ctx, cfg.Domain, dnsName, powerdns.RRTypeAAAA); err != nil {
 				return fmt.Errorf("could not delete forward record: %s", err)
 			}
 		}
@@ -123,17 +123,17 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	defer log.SetPrefix("")
 	defer log.SetFlags(log.LstdFlags)
 
-	pdns := powerdns.NewClient(cfg.PdnsApiHost, "localhost", map[string]string{"X-API-Key": cfg.PdnsApiKey}, nil)
-	ctx := context.Background()
+	cfg.PdnsClient = powerdns.NewClient(cfg.PdnsApiHost, "localhost", map[string]string{"X-API-Key": cfg.PdnsApiKey}, nil)
+	cfg.ctx = context.Background()
 
 	if webhook.Event == "created" || webhook.Event == "updated" {
-		if err := updateRecord(pdns, ctx, webhook); err != nil {
+		if err := updateRecord(webhook); err != nil {
 			log.Println(err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 	} else if webhook.Event == "deleted" {
-		deleteRecord(pdns, ctx, webhook.Data.Address, webhook.Data.DnsName)
+		deleteRecord(webhook.Data.Address, webhook.Data.DnsName)
 	} else {
 		// We should never get here
 		log.Printf("Unknown event type: %s\n", webhook.Event)
