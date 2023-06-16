@@ -26,5 +26,7 @@ func main() {
 	log.Printf("Listening on %s...\n", listenAddress)
 
 	http.HandleFunc("/", handleWebhook)
+	http.HandleFunc("/hello", handleHello)
+
 	log.Fatal(http.ListenAndServe(listenAddress, nil))
 }

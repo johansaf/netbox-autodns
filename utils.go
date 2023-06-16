@@ -1,12 +1,45 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"net/netip"
 	"os"
+	"runtime/debug"
 	"strings"
 )
+
+// https://developers.redhat.com/articles/2022/11/14/3-ways-embed-commit-hash-go-programs#3__using_runtime_debug_package
+var Commit = func() string {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range info.Settings {
+			if setting.Key == "vcs.revision" {
+				return setting.Value
+			}
+		}
+	}
+
+	return ""
+}()
+
+// Used for health check, and for checking the git commit hash
+func handleHello(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		Hello  string
+		Commit string
+	}{
+		Hello:  "World!",
+		Commit: Commit,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(data)
+
+	fmt.Fprintf(w, "Hello, World!")
+}
 
 // https://golangcookbook.com/chapters/strings/reverse/
 func reverse(s string) string {
