@@ -23,6 +23,7 @@ var cfg = readConfig()
 
 func main() {
 	var listenAddress = cfg.ListenAddress
+	log.Printf("netbox-autodns commit %s starting\n", Commit[:7])
 	log.Printf("Listening on %s...\n", listenAddress)
 
 	http.HandleFunc("/", handleWebhook)
