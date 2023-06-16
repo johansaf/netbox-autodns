@@ -37,8 +37,6 @@ func handleHello(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(data)
-
-	fmt.Fprintf(w, "Hello, World!")
 }
 
 // https://golangcookbook.com/chapters/strings/reverse/
