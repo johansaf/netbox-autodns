@@ -58,23 +58,23 @@ func readConfig() Config {
 		log.Fatal("PDNS_API_HOST, PDNS_API_KEY or DOMAIN environment variables are empty")
 	}
 
-	// Check if the CREATE_FORWARD_RECORDS environment variable is empty, set it to true if so
-	if os.Getenv("CREATE_FORWARD_RECORDS") == "" {
-		os.Setenv("CREATE_FORWARD_RECORDS", "true")
+	// Check if the SKIP_FORWARD_RECORDS environment variable is empty, set it to true if so
+	if os.Getenv("SKIP_FORWARD_RECORDS") == "" {
+		os.Setenv("SKIP_FORWARD_RECORDS", "true")
 	}
 
-	// Check if the CREATE_REVERSE_RECORDS environment variable is empty, set it to true if so
-	if os.Getenv("CREATE_REVERSE_RECORDS") == "" {
-		os.Setenv("CREATE_REVERSE_RECORDS", "true")
+	// Check if the SKIP_REVERSE_RECORDS environment variable is empty, set it to true if so
+	if os.Getenv("SKIP_REVERSE_RECORDS") == "" {
+		os.Setenv("SKIP_REVERSE_RECORDS", "true")
 	}
 
 	cfg := Config{
-		ListenAddress:       os.Getenv("LISTEN_ADDRESS"),
-		PdnsApiHost:         os.Getenv("PDNS_API_HOST"),
-		PdnsApiKey:          os.Getenv("PDNS_API_KEY"),
-		Domain:              os.Getenv("DOMAIN"),
-		CreateForwardRecord: os.Getenv("CREATE_FORWARD_RECORDS") == "true",
-		CreateReverseRecord: os.Getenv("CREATE_REVERSE_RECORDS") == "true",
+		ListenAddress:     os.Getenv("LISTEN_ADDRESS"),
+		PdnsApiHost:       os.Getenv("PDNS_API_HOST"),
+		PdnsApiKey:        os.Getenv("PDNS_API_KEY"),
+		Domain:            os.Getenv("DOMAIN"),
+		SkipForwardRecord: os.Getenv("SKIP_FORWARD_RECORDS") == "true",
+		SkipReverseRecord: os.Getenv("SKIP_REVERSE_RECORDS") == "true",
 	}
 	return cfg
 }

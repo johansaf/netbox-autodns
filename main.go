@@ -6,12 +6,12 @@ import (
 )
 
 type Config struct {
-	ListenAddress       string
-	PdnsApiHost         string
-	PdnsApiKey          string
-	Domain              string
-	CreateForwardRecord bool
-	CreateReverseRecord bool
+	ListenAddress     string
+	PdnsApiHost       string
+	PdnsApiKey        string
+	Domain            string
+	SkipForwardRecord bool
+	SkipReverseRecord bool
 }
 
 var cfg = readConfig()
