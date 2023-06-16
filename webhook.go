@@ -51,14 +51,13 @@ func updateRecord(client *powerdns.Client, ctx context.Context, webhook Webhook)
 
 	// Create the new forward record
 	if cfg.SkipForwardRecord {
-		domain := "." + ensureDot(cfg.Domain) // Prefix the DOMAIN with a dot to prevent issues with missing dots, like "router.example.com" becoming "routerexample.com"
-		if strings.HasSuffix(dnsName, domain) {
+		if strings.HasSuffix(dnsName, cfg.Domain) {
 			if webhook.Data.Address.Addr().Is4() {
-				if err := client.Records.Change(ctx, ensureDot(cfg.Domain), dnsName, powerdns.RRTypeA, 86400, []string{webhook.Data.Address.Addr().String()}); err != nil {
+				if err := client.Records.Change(ctx, cfg.Domain, dnsName, powerdns.RRTypeA, 86400, []string{webhook.Data.Address.Addr().String()}); err != nil {
 					return fmt.Errorf("could not create new forward record: %s", err)
 				}
 			} else {
-				if err := client.Records.Change(ctx, ensureDot(cfg.Domain), dnsName, powerdns.RRTypeAAAA, 86400, []string{webhook.Data.Address.Addr().String()}); err != nil {
+				if err := client.Records.Change(ctx, cfg.Domain, dnsName, powerdns.RRTypeAAAA, 86400, []string{webhook.Data.Address.Addr().String()}); err != nil {
 					return fmt.Errorf("could not create new forward record: %s", err)
 				}
 			}
@@ -85,11 +84,11 @@ func deleteRecord(client *powerdns.Client, ctx context.Context, ip netip.Prefix,
 	// Delete the old forward record
 	if cfg.SkipForwardRecord {
 		if ip.Addr().Is4() {
-			if err := client.Records.Delete(ctx, ensureDot(cfg.Domain), dnsName, powerdns.RRTypeA); err != nil {
+			if err := client.Records.Delete(ctx, cfg.Domain, dnsName, powerdns.RRTypeA); err != nil {
 				return fmt.Errorf("could not delete forward record: %s", err)
 			}
 		} else {
-			if err := client.Records.Delete(ctx, ensureDot(cfg.Domain), dnsName, powerdns.RRTypeAAAA); err != nil {
+			if err := client.Records.Delete(ctx, cfg.Domain, dnsName, powerdns.RRTypeAAAA); err != nil {
 				return fmt.Errorf("could not delete forward record: %s", err)
 			}
 		}

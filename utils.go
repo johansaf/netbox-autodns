@@ -72,7 +72,7 @@ func readConfig() Config {
 		ListenAddress:     os.Getenv("LISTEN_ADDRESS"),
 		PdnsApiHost:       os.Getenv("PDNS_API_HOST"),
 		PdnsApiKey:        os.Getenv("PDNS_API_KEY"),
-		Domain:            os.Getenv("DOMAIN"),
+		Domain:            ensureDot(os.Getenv("DOMAIN")),
 		SkipForwardRecord: os.Getenv("SKIP_FORWARD_RECORDS") == "true",
 		SkipReverseRecord: os.Getenv("SKIP_REVERSE_RECORDS") == "true",
 	}
