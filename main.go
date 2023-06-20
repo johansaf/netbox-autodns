@@ -8,6 +8,7 @@ import (
 	"github.com/joeig/go-powerdns/v3"
 )
 
+// Struct containing configuration values, globally available
 type Config struct {
 	ListenAddress     string
 	PdnsApiHost       string
@@ -19,9 +20,11 @@ type Config struct {
 	ctx               context.Context
 }
 
-var cfg = readConfig()
+var cfg = Config{}
 
 func main() {
+	cfg = readConfig()
+
 	var listenAddress = cfg.ListenAddress
 	log.Printf("Listening on %s...\n", listenAddress)
 
