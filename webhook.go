@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/netip"
@@ -105,11 +107,25 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Quickfix to use the an io.Reader twice
+	var buf bytes.Buffer
+	body := io.TeeReader(r.Body, &buf)
+
+	// Verify the signature if it's present
+	sig := r.Header.Get("X-Hook-Signature")
+	if sig != "" {
+		if ok := verifySignature(sig, body); !ok {
+			log.Println("Signature verification failed")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+	}
+
 	// Decode the JSON data into a struct that we can work with
 	var webhook Webhook
-	err := json.NewDecoder(r.Body).Decode(&webhook)
+	err := json.NewDecoder(&buf).Decode(&webhook)
 	if err != nil {
-		log.Println("Could not decode request body")
+		log.Println("Could not decode request body to json")
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}

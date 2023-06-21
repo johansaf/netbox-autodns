@@ -16,6 +16,7 @@ LISTEN_ADDRESS=":8080"                   # IP and port to bind to
 PDNS_API_HOST="http://dns.example.com"   # The PowerDNS API URL (required)
 PDNS_API_KEY="ChangeMe"                  # PowerDNS API key (required)
 DOMAIN="example.com"                     # Domain to be used for forward records (required, even if not used)
+SECRET=""                                # Optional secret to verify the HMAC signature of the webhook request
 SKIP_FORWARD_RECORDS=""                  # If set to anything then disable the creation of forward records
 SKIP_REVERSE_RECORDS=""                  # If set to anything then disable the creation of reverse records
 ```

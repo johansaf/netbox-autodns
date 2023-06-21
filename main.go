@@ -14,6 +14,7 @@ type Config struct {
 	PdnsApiHost       string
 	PdnsApiKey        string
 	Domain            string
+	Secret            string
 	SkipForwardRecord bool
 	SkipReverseRecord bool
 	PdnsClient        *powerdns.Client

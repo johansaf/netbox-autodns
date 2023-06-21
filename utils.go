@@ -1,8 +1,12 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/netip"
@@ -53,6 +57,19 @@ func generateReverse(prefix netip.Prefix) (string, string, error) {
 	return zone, record, nil
 }
 
+// Verify the HMAC signature of the request
+func verifySignature(sig string, reqBody io.Reader) bool {
+	body, err := io.ReadAll(reqBody)
+	if err != nil {
+		log.Println("Could not read request body in verifySignature")
+		return false
+	}
+	h := hmac.New(sha512.New, []byte(cfg.Secret))
+	h.Write([]byte(body))
+	sha := hex.EncodeToString((h.Sum(nil)))
+	return sha == sig
+}
+
 // Make sure the DNS name ends with a dot, which is required by PowerDNS
 func ensureDot(s string) string {
 	if s[len(s)-1:] != "." {
@@ -88,6 +105,7 @@ func readConfig() Config {
 		PdnsApiHost:       os.Getenv("PDNS_API_HOST"),
 		PdnsApiKey:        os.Getenv("PDNS_API_KEY"),
 		Domain:            ensureDot(os.Getenv("DOMAIN")),
+		Secret:            os.Getenv("SECRET"),
 		SkipForwardRecord: os.Getenv("SKIP_FORWARD_RECORDS") == "true",
 		SkipReverseRecord: os.Getenv("SKIP_REVERSE_RECORDS") == "true",
 	}
