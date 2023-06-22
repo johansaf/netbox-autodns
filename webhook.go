@@ -100,6 +100,8 @@ func deleteRecord(ip netip.Prefix, dnsName string) error {
 }
 
 func handleWebhook(w http.ResponseWriter, r *http.Request) {
+	var webhook Webhook
+
 	// We only accept POST requests
 	// When deleting a record we should probably do DELETE, but I can't be bothered
 	if r.Method != "POST" {
@@ -107,27 +109,31 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Quickfix to use the an io.Reader twice
-	var buf bytes.Buffer
-	body := io.TeeReader(r.Body, &buf)
-
 	// Verify the signature if it's present
 	sig := r.Header.Get("X-Hook-Signature")
 	if sig != "" {
+		var buf bytes.Buffer
+		// Quick and dirty way to read the body twice
+		body := io.TeeReader(r.Body, &buf)
 		if ok := verifySignature(sig, body); !ok {
 			log.Println("Signature verification failed")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
-	}
-
-	// Decode the JSON data into a struct that we can work with
-	var webhook Webhook
-	err := json.NewDecoder(&buf).Decode(&webhook)
-	if err != nil {
-		log.Println("Could not decode request body to json")
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
+		err := json.NewDecoder(&buf).Decode(&webhook)
+		if err != nil {
+			log.Println("Could not decode request body to json")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+	} else {
+		// If there's no signature we can't verify the request, so we'll just assume it's valid
+		err := json.NewDecoder(r.Body).Decode(&webhook)
+		if err != nil {
+			log.Println("Could not decode request body to json")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
 	}
 
 	// We should be good, set up the logger so we can follow the request a bit easier
