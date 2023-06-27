@@ -56,6 +56,15 @@ Something like this should work:
 
 The conditions will ensure a request only is sent if the status of the IP address is active, the VRF is not set (implying the global VRF), and the DNS name field is non-empty.
 
+If you're using a Netbox version newer than 3.5.3 you can also add a dependency on the tag "auto-dns" by adding this:
+```json
+{
+	"op": "contains",
+	"attr": "tags.name",
+	"value": "auto-dns"
+}
+```
+
 Now whenever an IP address is created, updated or deleted this should be reflected in the DNS zones.
 
 ### Delete
