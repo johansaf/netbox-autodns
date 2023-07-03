@@ -1,11 +1,13 @@
 # netbox-autodns
 
-An application that receives JSON data from a [Netbox webhook](https://demo.netbox.dev/static/docs/additional-features/webhooks/) and uses the data to create, update and delete forward and/or reverse DNS records using the [go-powerdns](https://github.com/joeig/go-powerdns) module.
+Receive [Netbox webhooks](https://demo.netbox.dev/static/docs/additional-features/webhooks/) and create, update and delete forward and/or reverse DNS records using the [go-powerdns](https://github.com/joeig/go-powerdns) module.
 
 ## Requirements
 
 - A working Netbox and PowerDNS setup
 - PowerDNS must have the API enabled with an API key
+
+This has been tested with Netbox v3.5.2 and newer.
 
 ## Configuration
 
